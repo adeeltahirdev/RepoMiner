@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}About &mdash; RepoMiner{% endblock %}
+
+{% block content %}
+
+<div class="container py-5">
+
+  <div class="text-center mb-5">
+    <h1 class="fw-bold">About RepoMiner</h1>
+    <p class="text-muted">Download only what you need from GitHub repositories</p>
+  </div>
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <h3 class="mb-3">What is RepoMiner?</h3>
+      <p>
+        RepoMiner is a simple web application that helps you download specific files or folders 
+        from a public GitHub repository. Normally, GitHub only allows downloading the entire repository 
+        as a ZIP file. RepoMiner solves this problem by letting you pick exactly what you need.
+      </p>
+
+      <h3 class="mt-4 mb-3">Why RepoMiner?</h3>
+      <p>
+        Sometimes you only need a single folder, like images, assets, or a small part of a project. 
+        Downloading the full repository can be unnecessary and time-consuming. RepoMiner makes this 
+        process fast and efficient by giving you direct access to individual files and folders.
+      </p>
+
+      <h3 class="mt-4 mb-3">How it Works</h3>
+      <ul>
+        <li>Enter a public GitHub repository URL</li>
+        <li>Browse files and folders inside the repository</li>
+        <li>Download a single file instantly</li>
+        <li>Download a complete folder as a ZIP file</li>
+      </ul>
+
+      <h3 class="mt-4 mb-3">Features</h3>
+      <ul>
+        <li>Simple and clean interface</li>
+        <li>Fast file access using GitHub API</li>
+        <li>Download folders as ZIP files</li>
+        <li>No login required</li>
+      </ul>
+
+      <h3 class="mt-4 mb-3">Built With</h3>
+      <ul>
+        <li>Flask (Python backend)</li>
+        <li>Bootstrap (UI design)</li>
+        <li>GitHub API</li>
+      </ul>
+
+      <h3 class="mt-4 mb-3">Future Improvements</h3>
+      <ul>
+        <li>Search inside repositories</li>
+        <li>Support for private repositories</li>
+        <li>Better file preview</li>
+        <li>Download from specific branches</li>
+      </ul>
+
+      <div class="text-center mt-5">
+        <a href="/" class="btn btn-dark">Try RepoMiner</a>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

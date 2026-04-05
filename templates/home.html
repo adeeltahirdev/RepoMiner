@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Home &mdash; RepoMiner{% endblock %}
+
+{% block content %}
+
+<div
+  class="container d-flex flex-column justify-content-center align-items-center text-center"
+  style="height: 100vh"
+>
+  <!-- Heading -->
+  <h1 class="fw-bold mb-3 montserrat-underline-400">RepoMiner</h1>
+  <p class="text-muted mb-4">
+    Download specific files and folders from any GitHub repository
+  </p>
+
+  <!-- Form -->
+  <form action="/repo-view" method="post" style="width: 100%; max-width: 500px">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="input-group">
+          <span class="input-group-text">
+            <ion-icon name="link"></ion-icon>
+          </span>
+
+          <input
+            type="url"
+            name="repo_url"
+            class="form-control"
+            placeholder="Enter GitHub Repo URL"
+            required
+          />
+
+          <button type="submit" class="btn btn-dark">Get Repo</button>
+        </div>
+      </div>
+    </div>
+  </form>
+  <p class="mt-4 text-muted small">Example: https://github.com/user/repo</p>
+</div>
+
+{% endblock %}
