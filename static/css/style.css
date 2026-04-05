@@ -6,3 +6,49 @@
   font-style: normal;
 }
 
+/* ----------------- */
+
+/* Overflow Fix */
+.card {
+  overflow: visible;
+}
+
+.folder-children {
+  margin-top: 5px;
+}
+
+/* ----------------- */
+
+.list-group-item:hover {
+  background-color: #f8f9fa;
+}
+
+body {
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Dark mode */
+body.dark-mode {
+  background-color: #121212;
+  color: #ffffff;
+}
+
+body.dark-mode .card {
+  background-color: #1e1e1e;
+  color: #ffffff;
+}
+
+body.dark-mode .list-group-item {
+  background-color: #1e1e1e;
+  color: #ffffff;
+  border-color: #2c2c2c;
+}
+
+body.dark-mode .navbar,
+body.dark-mode footer {
+  background-color: #000 !important;
+}
+
+body.dark-mode a {
+  color: #9ecbff;
+}

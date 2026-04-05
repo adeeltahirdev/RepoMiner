@@ -1,16 +1,12 @@
-{% extends "base.html" %}
-
-{% block title %}Repository &mdash; RepoMiner{% endblock %}
-
-{% block content %}
+{% extends "base.html" %} {% block title %}Repository &mdash; RepoMiner{%
+endblock %} {% block content %}
 
 <div
   class="container d-flex flex-column justify-content-center align-items-center text-center"
-  style="height: 100vh"
 >
   <!-- Repo Header -->
   <div class="mb-4">
-    <h4 class="fw-bold">owner/repo</h4>
+    <h4 class="fw-bold">{{ owner }}/{{ repo }}</h4>
     <p class="text-muted mb-0">Browse and download files or folders</p>
   </div>
 
@@ -20,47 +16,124 @@
       <li class="breadcrumb-item">
         <a href="#">root</a>
       </li>
-      <li class="breadcrumb-item">
-        <a href="#">folder</a>
-      </li>
     </ol>
   </nav>
 
   <!-- File Explorer Card -->
-  <div class="card shadow-sm">
+  <div class="card shadow-sm" style="width: 100%; max-width: 700px">
     <div class="card-body p-0">
       <ul class="list-group list-group-flush">
-
-        <!-- Folder Item -->
-        <li class="list-group-item d-flex justify-content-between align-items-center">
+        {% for item in contents %}
+        <li
+          class="list-group-item d-flex justify-content-between align-items-center"
+        >
+          <!-- Left Side -->
           <div>
-            📁 
-            <a href="#" class="text-decoration-none">
-              images
+            {% if item.type == "dir" %}
+            <ion-icon name="folder-open"></ion-icon>
+            <a
+              href="javascript:void(0)"
+              onclick="toggleFolder(this, '{{ item.path }}')"
+              class="text-decoration-none"
+            >
+              {{ item.name }}
             </a>
-          </div>
-          <div>
-            <a href="#" class="btn btn-lg">
-              <ion-icon name="cloud-download"></ion-icon>
-            </a>
-          </div>
-        </li>
+            <div class="folder-children ms-4"></div>
 
-        <!-- File Item -->
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-          <div>
-            📄 app.py
+            {% else %}
+            <ion-icon name="document-outline"></ion-icon>
+            {{ item.name }} {% endif %}
           </div>
+
+          <!-- Right Side -->
           <div>
-            <a href="#" class="btn btn-lg">
+            {% if item.type == "file" %}
+            <a
+              href="/download-file?url={{ item.download_url }}"
+              class="btn btn-lg"
+            >
               <ion-icon name="cloud-download-outline"></ion-icon>
             </a>
+            {% else %}
+            <a
+              href="/download-folder?owner={{ owner }}&repo={{ repo }}&path={{ item.path }}"
+              class="btn btn-lg"
+            >
+              <ion-icon name="cloud-download"></ion-icon>
+            </a>
+            {% endif %}
           </div>
         </li>
-
+        {% endfor %}
       </ul>
     </div>
   </div>
 </div>
+
+{% endblock %} {% block extra_script %}
+
+<script>
+  async function toggleFolder(element, path) {
+    const parent = element.closest("li");
+    const container = parent.querySelector(".folder-children");
+
+    // Toggle collapse
+    if (container.innerHTML !== "") {
+      container.innerHTML = "";
+      return;
+    }
+
+    const owner = "{{ owner }}";
+    const repo = "{{ repo }}";
+
+    const response = await fetch(
+      `/get-contents?owner=${owner}&repo=${repo}&path=${path}`,
+    );
+    const data = await response.json();
+
+    let html = "<ul class='list-group list-group-flush mt-2'>";
+
+    data.forEach((item) => {
+      if (item.type === "dir") {
+        html += `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <ion-icon name="folder-open"></ion-icon>
+                        <a href="javascript:void(0)" 
+                           onclick="toggleFolder(this, '${item.path}')"
+                           class="text-decoration-none ms-1">
+                           ${item.name}
+                        </a>
+                        <div class="folder-children ms-4"></div>
+                    </div>
+                    <div>
+                        <a href="/download-folder?owner=${owner}&repo=${repo}&path=${item.path}" class="btn btn-sm">
+                            <ion-icon name="cloud-download"></ion-icon>
+                        </a>                        
+                    </div>
+                </li>
+            `;
+      } else {
+        html += `
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <ion-icon name="document-outline"></ion-icon>
+                        <span class="ms-1">${item.name}</span>
+                    </div>
+                    <div>
+                        <a href="/download-file?url=${item.download_url}" class="btn btn-sm">
+                            <ion-icon name="cloud-download-outline"></ion-icon>
+                        </a>
+                    </div>
+                </li>
+            `;
+      }
+    });
+
+    html += "</ul>";
+
+    container.innerHTML = html;
+  }
+</script>
 
 {% endblock %}
