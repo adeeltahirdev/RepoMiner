@@ -65,12 +65,64 @@ def get_contents():
 @app.route('/download-file')
 def download_file():
     url = request.args.get('url')
+    file_name = url.split('/')[-1]
     response = requests.get(url)
     
     return send_file(
         io.BytesIO(response.content),
         as_attachment=True,
-        download_name='file'
+        download_name=f"{file_name}"
+    )
+    
+    
+def get_all_files(owner, repo, path=""):
+    url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
+    response = requests.get(url)
+
+    if response.status_code != 200:
+        return []
+
+    items = response.json()
+    files = []
+
+    for item in items:
+        if item["type"] == "file":
+            files.append(item)
+        elif item["type"] == "dir":
+            files.extend(get_all_files(owner, repo, item["path"]))
+
+    return files
+    
+@app.route('/download-folder')
+def download_folder():
+    owner = request.args.get('owner')
+    repo = request.args.get('repo')
+    path = request.args.get('path', '')
+
+    files = get_all_files(owner, repo, path)
+
+    if not files:
+        return "Folder is empty or error occurred"
+
+    memory_file = io.BytesIO()
+
+    with zipfile.ZipFile(memory_file, 'w') as zf:
+        for file in files:
+            try:
+                file_data = requests.get(file["download_url"]).content
+                relative_path = file["path"].replace(path + "/", "") if path else file["path"]
+                zf.writestr(relative_path, file_data)
+            except:
+                continue
+
+    memory_file.seek(0)
+
+    folder_name = path.split("/")[-1] if path else repo
+
+    return send_file(
+        memory_file,
+        as_attachment=True,
+        download_name=f"{folder_name}.zip"
     )
 
 @app.route('/about')
