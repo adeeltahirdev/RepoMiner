@@ -52,3 +52,10 @@ body.dark-mode footer {
 body.dark-mode a {
   color: #9ecbff;
 }
+
+/* ------------------ */
+
+.form-control:focus {
+    box-shadow: none !important;
+    border-color: #ced4da;
+}

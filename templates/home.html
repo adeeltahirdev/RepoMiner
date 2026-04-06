@@ -15,7 +15,7 @@
   </p>
 
   <!-- Form -->
-  <form action="/repo-view" method="post" style="width: 100%; max-width: 500px">
+  <form action="/repo-view" method="post" style="width: 100%; max-width: 500px" id="repoForm">
     <div class="card shadow-sm">
       <div class="card-body">
         <div class="input-group">
@@ -26,12 +26,12 @@
           <input
             type="url"
             name="repo_url"
-            class="form-control"
+            class="form-control shadow-none"
             placeholder="Enter GitHub Repo URL"
             required
           />
 
-          <button type="submit" class="btn btn-dark">Get Repo</button>
+          <button type="submit" class="btn btn-dark" id="submitBtn">Get Repo</button>
         </div>
       </div>
     </div>
@@ -39,4 +39,39 @@
   <p class="mt-4 small">Example: https://github.com/user/repo</p>
 </div>
 
+<!-- Loading Toast/Message -->
+<div id="loadingToast" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: none; min-width: 250px; background: transparent; border: 1px solid #dee2e6; border-radius: 8px; padding: 12px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <div class="spinner-border spinner-border-sm text-primary" style="width: 1.2rem; height: 1.2rem;" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+    <span id="toastMessage">Fetching repository data... This may take a moment</span>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_script %}
+<script>
+  // Handle form submission with loading indicator
+  document.getElementById('repoForm').addEventListener('submit', function(e) {
+    const repoUrl = document.querySelector('input[name="repo_url"]').value;
+    
+    if (!repoUrl) {
+      e.preventDefault();
+      return;
+    }
+    
+    // Show loading message
+    const toast = document.getElementById('loadingToast');
+    toast.style.display = 'block';
+    
+    // Disable submit button to prevent multiple submissions
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Get Repo';
+    
+    // The form will submit normally after showing the loading message
+  });
+</script>
 {% endblock %}
