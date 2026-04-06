@@ -1,10 +1,11 @@
 [project]
 name = "repominer"
 version = "0.1.0"
-description = "Add your description here"
+description = "RepoMiner is web application to download github repository's files individualy or entire folder."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "dotenv>=0.9.9",
     "flask>=3.1.3",
     "requests>=2.33.1",
 ]
