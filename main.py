@@ -1,10 +1,20 @@
-from flask import Flask, render_template, request, redirect, send_file
+from flask import Flask, render_template, request, redirect, send_file, flash, url_for
 import requests
 import zipfile
 import io
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 app = Flask(__name__)
+app.secret_key = 'flash_seceret_key'
+
+HEADERS = {
+    "Authorization": f"token {os.getenv('GITHUB_TOKEN')}",
+    "Accept": "application/vnd.github.v3+json"
+}
 
 @app.route('/')
 def home():
@@ -20,14 +30,15 @@ def repo_view(owner=None, repo=None, path=""):
         repo_url = request.form.get('repo_url')
 
         if not repo_url:
-            return redirect('/')
+            return redirect(url_for('home'))
 
         try:
             parts = repo_url.strip('/').split('/')
             owner = parts[-2]
             repo = parts[-1]
         except:
-            return "Invalid GitHub URL"
+            flash('Invalid URL!')
+            return redirect(url_for('home'))
 
         return redirect(f"/repo-view/{owner}/{repo}/")
 
@@ -36,10 +47,13 @@ def repo_view(owner=None, repo=None, path=""):
         return redirect('/')
 
     url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
-    response = requests.get(url)
+    response = requests.get(url, headers=HEADERS)
 
     if response.status_code != 200:
-        return "Repository not found or API error"
+        print("STATUS:", response.status_code)
+        print("RESPONSE:", response.text)
+        flash('Invalid URL!')
+        return redirect(url_for('home'))
 
     contents = response.json()
 
@@ -58,7 +72,7 @@ def get_contents():
     path = request.args.get('path', '')
 
     url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
-    response = requests.get(url)
+    response = requests.get(url, headers=HEADERS)
 
     return response.json()
 
@@ -66,7 +80,7 @@ def get_contents():
 def download_file():
     url = request.args.get('url')
     file_name = url.split('/')[-1]
-    response = requests.get(url)
+    response = requests.get(url, headers=HEADERS)
     
     return send_file(
         io.BytesIO(response.content),
@@ -77,7 +91,7 @@ def download_file():
     
 def get_all_files(owner, repo, path=""):
     url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
-    response = requests.get(url)
+    response = requests.get(url, headers=HEADERS)
 
     if response.status_code != 200:
         return []
@@ -109,7 +123,7 @@ def download_folder():
     with zipfile.ZipFile(memory_file, 'w') as zf:
         for file in files:
             try:
-                file_data = requests.get(file["download_url"]).content
+                file_data = requests.get(file["download_url"], headers=HEADERS).content
                 relative_path = file["path"].replace(path + "/", "") if path else file["path"]
                 zf.writestr(relative_path, file_data)
             except:
