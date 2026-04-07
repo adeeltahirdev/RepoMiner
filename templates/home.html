@@ -1,7 +1,4 @@
-{% extends "base.html" %}
-
-{% block title %}Home &mdash; RepoMiner{% endblock %}
-
+{% extends "base.html" %} {% block title %}Home &mdash; RepoMiner{% endblock %}
 {% block content %}
 
 <div
@@ -11,11 +8,11 @@
   <!-- Heading -->
   <h1 class="fw-bold mb-3 montserrat-underline-400">RepoMiner</h1>
   <p class="mb-4">
-    Download specific files and folders from any GitHub repository
+    Download specific files and folders from any public GitHub repository
   </p>
 
   <!-- Form -->
-  <form action="/repo-view" method="post" style="width: 100%; max-width: 500px" id="repoForm">
+  <form method="post" style="width: 100%; max-width: 500px" id="repoForm">
     <div class="card shadow-sm">
       <div class="card-body">
         <div class="input-group">
@@ -27,11 +24,14 @@
             type="url"
             name="repo_url"
             class="form-control shadow-none"
+            id="repoUrl"
             placeholder="Enter GitHub Repo URL"
             required
           />
 
-          <button type="submit" class="btn btn-dark" id="submitBtn">Get Repo</button>
+          <button type="submit" class="btn btn-dark" id="submitBtn">
+            Get Repo
+          </button>
         </div>
       </div>
     </div>
@@ -39,39 +39,195 @@
   <p class="mt-4 small">Example: https://github.com/user/repo</p>
 </div>
 
+<div class="container" id="repoResults" style="display: none">
+  <h3 id="repoTitle" class="mb-3 d-flex justify-content-center align-items-center"></h3>
+  <p class="text-muted" id="repoPath"></p>
+  <div class="list-group" id="repoList"></div>
+</div>
+
 <!-- Loading Toast/Message -->
-<div id="loadingToast" style="position: fixed; bottom: 20px; right: 20px; z-index: 9999; display: none; min-width: 250px; background: transparent; border: 1px solid #dee2e6; border-radius: 8px; padding: 12px 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
-  <div style="display: flex; align-items: center; gap: 12px;">
-    <div class="spinner-border spinner-border-sm text-primary" style="width: 1.2rem; height: 1.2rem;" role="status">
-      <span class="visually-hidden">Loading...</span>
+<div
+  id="loadingToast"
+  style="
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 9999;
+    display: none;
+    min-width: 250px;
+    background: transparent;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 12px 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  "
+>
+  <div style="display: flex; align-items: center; gap: 12px">
+    <div
+      class="spinner-border spinner-border-sm text-primary"
+      style="width: 1.2rem; height: 1.2rem"
+      role="status"
+    >
     </div>
-    <span id="toastMessage">Fetching repository data... This may take a moment</span>
+    <span id="toastMessage"
+      >Fetching repository data... This may take a moment</span
+    >
   </div>
 </div>
 
-{% endblock %}
+{% endblock %} {% block extra_script %}
 
-{% block extra_script %}
 <script>
-  // Handle form submission with loading indicator
-  document.getElementById('repoForm').addEventListener('submit', function(e) {
-    const repoUrl = document.querySelector('input[name="repo_url"]').value;
-    
-    if (!repoUrl) {
-      e.preventDefault();
-      return;
+  // Fetch function for root and folder navigatioin
+  async function fetchRepoContent(repoUrl, path = "") {
+    const resultDiv = document.getElementById("repoResults");
+    const toast = document.getElementById("loadingToast");
+
+    toast.style.display = "block";
+
+    try {
+      const response = await fetch('/api/repo-content', {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          repo_url: repoUrl,
+          path: path,
+        }),
+      });
+      const data = await response.json();
+
+      if (!response.ok) {
+        resultDiv.innerHTML = `<p class="alert alert-danger">${data.error}</p>`;
+      }
+      else {
+        renderResults(data);
+      }
     }
-    
-    // Show loading message
-    const toast = document.getElementById('loadingToast');
-    toast.style.display = 'block';
-    
-    // Disable submit button to prevent multiple submissions
-    const submitBtn = document.getElementById('submitBtn');
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Get Repo';
-    
-    // The form will submit normally after showing the loading message
+    catch (error) {
+      console.error(error);
+      resultDiv.innerHTML = `<p class="alert alert-warning">Something went wrong!</p>`;
+    }
+
+    toast.style.display = "none";
+  }
+
+  // File download function
+  function downloadFile(url, filename) {
+    fetch(url)
+      .then(res => res.blob())
+      .then(blob => {
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(blob);
+      })
+      .catch(err => console.error("Download Failed:", err));
+  }
+
+
+  // Rendering function to render the content for displaying
+  function renderResults(data, parentElement = null) {
+  const container = parentElement || document.getElementById("repoList");
+
+  if (!parentElement) {
+    const title = document.getElementById("repoTitle");
+    document.getElementById("repoResults").style.display = "block";
+    title.textContent = `${data.owner} / ${data.repo}`;
+    container.innerHTML = "";
+  }
+
+  data.items.forEach((item) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "list-group-item";
+
+    // Folder UI
+    if (item.is_dir) {
+      wrapper.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center folder-header" style="cursor:pointer;">
+          <div class="d-flex align-items-center gap-2">
+            <ion-icon name="folder"></ion-icon>
+            <span>${item.name}</span>
+          </div>
+          <ion-icon name="chevron-down-outline"></ion-icon>
+        </div>
+
+        <div class="child-container ms-4 mt-2" style="display:none;"></div>
+      `;
+
+      const header = wrapper.querySelector(".folder-header");
+      const childContainer = wrapper.querySelector(".child-container");
+
+      let isLoaded = false;
+
+      header.addEventListener("click", async () => {
+        const isVisible = childContainer.style.display === "block";
+
+        // Toggle UI
+        childContainer.style.display = isVisible ? "none" : "block";
+
+        // Fetch only once (lazy loading)
+        if (!isLoaded) {
+          const repoUrl = document.getElementById("repoUrl").value;
+
+          const response = await fetch("/api/repo-content", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              repo_url: repoUrl,
+              path: item.path,
+            }),
+          });
+
+          const data = await response.json();
+
+          // Render children inside this folder
+          renderResults(data, childContainer);
+
+          isLoaded = true;
+        }
+      });
+
+    } else {
+      // File UI
+      wrapper.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+          <div class="d-flex align-items-center gap-2">
+            <ion-icon name="document-outline"></ion-icon>
+            <span>${item.name}</span>
+          </div>
+
+          ${
+            item.download_url
+              ? `<button onclick="downloadFile('${item.download_url}', '${item.name}')" class="btn btn-sm btn-dark">
+                  <ion-icon name="cloud-download-outline"></ion-icon>
+                </button>`
+              : ""
+          }
+        </div>
+      `;
+    }
+
+    container.appendChild(wrapper);
   });
+}
+
+  // Handling the form submission 
+  document.getElementById("repoForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const repoUrl = document.getElementById("repoUrl").value;
+
+    fetchRepoContent(repoUrl, "");
+  });
+  
 </script>
+
 {% endblock %}
