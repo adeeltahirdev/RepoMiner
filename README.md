@@ -28,24 +28,6 @@ RepoMiner is a Flask-based web application that allows users to explore GitHub r
 
 ---
 
-## 📁 Project Structure
-
-repominer/
-├── app.py
-├── .env
-├── README.md
-├── templates/
-│   ├── base.html
-│   ├── home.html
-│   ├── repo.html
-│   └── about.html
-├── static/
-│   ├── css/
-│   ├── js/
-│   └── icons/
-
----
-
 ## ⚙️ Setup & Installation
 
 ### 1. Clone the repository
