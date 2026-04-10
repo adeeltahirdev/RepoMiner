@@ -41,6 +41,7 @@
 
 <div class="container" id="repoResults" style="display: none">
   <h3 id="repoTitle" class="mb-3 d-flex justify-content-center align-items-center"></h3>
+  <p class="mb-2 d-flex justify-content-center align-items-center">Browse and download files or folders</p>
   <p class="text-muted" id="repoPath"></p>
   <div class="list-group" id="repoList"></div>
 </div>
@@ -50,7 +51,7 @@
   id="loadingToast"
   style="
     position: fixed;
-    bottom: 20px;
+    top: 20px;
     right: 20px;
     z-index: 9999;
     display: none;
@@ -70,7 +71,7 @@
     >
     </div>
     <span id="toastMessage"
-      >Fetching repository data... This may take a moment</span
+      ></span
     >
   </div>
 </div>
@@ -78,12 +79,32 @@
 {% endblock %} {% block extra_script %}
 
 <script>
-  // Fetch function for root and folder navigatioin
-  async function fetchRepoContent(repoUrl, path = "") {
-    const resultDiv = document.getElementById("repoResults");
+  // Toast messages function
+  async function showToast(message, type = "info", duration = 5000) {
     const toast = document.getElementById("loadingToast");
+    const text = document.getElementById("toastMessage");
+
+    text.textContent = message;
 
     toast.style.display = "block";
+
+    toast.style.borderColor = type === "error" ? "#dc3545" : "#dee2e6";
+
+    setTimeout(() => {
+      toast.style.display = "none";
+    }, duration);
+
+  }
+
+  // Function to fetch content
+  async function fetchRepoContent(repoUrl) {
+    const resultDiv = document.getElementById("repoResults");
+    const toast = document.getElementById("loadingToast");
+    const repoList = document.getElementById("repoList");
+    const title = document.getElementById("repoTitle");
+
+    showToast("Fetching repository data... This may take a moment", "info", 7000);
+    
 
     try {
       const response = await fetch('/api/repo-content', {
@@ -93,28 +114,34 @@
         },
         body: JSON.stringify({
           repo_url: repoUrl,
-          path: path,
+          
         }),
       });
       const data = await response.json();
 
       if (!response.ok) {
-        resultDiv.innerHTML = `<p class="alert alert-danger">${data.error}</p>`;
+        showToast("Failed to fetch repository.... Please check your URL!", "error")
+        return;
       }
-      else {
-        renderResults(data);
-      }
+      
+      resultDiv.style.display = "block";
+      renderResults(data);
+      toast.style.display = "none";
+
+
     }
     catch (error) {
-      console.error(error);
-      resultDiv.innerHTML = `<p class="alert alert-warning">Something went wrong!</p>`;
+     showToast("Something went wrong!", "error");
+     return { error: "Something went wromg"};
     }
 
-    toast.style.display = "none";
   }
 
   // File download function
   function downloadFile(url, filename) {
+
+    showToast("Download being initialize...", "info", 200)
+
     fetch(url)
       .then(res => res.blob())
       .then(blob => {
@@ -128,6 +155,61 @@
         window.URL.revokeObjectURL(blob);
       })
       .catch(err => console.error("Download Failed:", err));
+  }
+
+  // Folder download function
+  async function downloadFolder(path) {
+    const repoUrl = document.getElementById("repoUrl").value;
+    const toast = document.getElementById("loadingToast");
+
+    showToast("Creating a zip to be downloaded....Be patient!", "info")
+
+    try {
+      const response = await fetch("/api/download-folder", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        repo_url: repoUrl,
+        path: path,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Download Failed!")
+    }
+
+    
+    const blob = await response.blob();
+    console.log(response.headers.get("Content-Disposition"));
+
+    const contentDisposition = response.headers.get("Content-Disposition");
+
+    let filename = "download.zip";
+
+    if (contentDisposition) {
+      const match = contentDisposition.match(/filename="?(.+)"?/);
+      if (match) {
+        filename = match[1];
+      }
+    }
+
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    window.URL.revokeObjectURL(blob);
+    }
+    catch (error) {
+      showToast("Failed to download....", "error")
+    }
+    
   }
 
 
@@ -151,10 +233,13 @@
       wrapper.innerHTML = `
         <div class="d-flex justify-content-between align-items-center folder-header" style="cursor:pointer;">
           <div class="d-flex align-items-center gap-2">
+            <ion-icon name="chevron-down-outline"></ion-icon>
             <ion-icon name="folder"></ion-icon>
             <span>${item.name}</span>
           </div>
-          <ion-icon name="chevron-down-outline"></ion-icon>
+          <button class="btn btn-sm btn-dark" onclick="event.stopPropagation(); downloadFolder('${item.path}')">
+          <ion-icon name="cloud-download"></ion-icon>
+          </button>
         </div>
 
         <div class="child-container ms-4 mt-2" style="display:none;"></div>
@@ -171,7 +256,7 @@
         // Toggle UI
         childContainer.style.display = isVisible ? "none" : "block";
 
-        // Fetch only once (lazy loading)
+        // Fetch only once 
         if (!isLoaded) {
           const repoUrl = document.getElementById("repoUrl").value;
 
@@ -225,7 +310,7 @@
 
     const repoUrl = document.getElementById("repoUrl").value;
 
-    fetchRepoContent(repoUrl, "");
+    fetchRepoContent(repoUrl);
   });
   
 </script>

@@ -56,18 +56,6 @@
     </div>
   </nav>
 
-  {% with messages = get_flashed_messages() %}
-  {% if messages %}
-    {% for message in messages %}
-    <div class="position-fixed top-0 end-0 p-3" style="z-index: 9999;">
-    <div class="alert alert-danger auto-dismiss">
-    {{ message }}
-    </div>
-    </div>
-    {% endfor %}
-  {% endif %}
-  {% endwith %}
-
   <main>
     {% block content %}
     {% endblock %}
@@ -123,24 +111,6 @@
       }
     });
   </script>
-
-  <script>
-document.addEventListener("DOMContentLoaded", function () {
-  const alerts = document.querySelectorAll(".auto-dismiss");
-
-  alerts.forEach(alert => {
-    setTimeout(() => {
-      alert.style.transition = "opacity 0.5s ease";
-      alert.style.opacity = "0";
-      
-      setTimeout(() => {
-        alert.remove();
-      }, 500); // wait for fade out
-    }, 5000); // 5 seconds
-  });
-});
-</script>
-
 
   {% block extra_script %}{% endblock %}
 </body>
