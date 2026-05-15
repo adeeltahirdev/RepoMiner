@@ -3,6 +3,14 @@
 RepoMiner is a Flask-based web application that allows users to explore GitHub repositories in a tree-like structure and download files or entire folders as ZIP archives.
 
 ---
+![RepoMiner Home Screen](screenshot/home-dark.png)
+
+![RepoMiner Home Screen](screenshot/home-light.png)
+
+![RepoMiner Repo Steucture](screenshot/repo-structure.png)
+
+![RepoMiner Repo Steucture](screenshot/repo-structure-footer.png)
+---
 
 ## 🚀 Features
 
